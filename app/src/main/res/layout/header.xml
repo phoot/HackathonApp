@@ -22,7 +22,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             android:textColor="#ffffff"
-            android:text="Akash Bangad"
+            android:text="name"
             android:textSize="14sp"
             android:textStyle="bold"
 

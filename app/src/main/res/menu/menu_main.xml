@@ -18,7 +18,7 @@
     <item
         android:id="@+id/action_user"
         android:orderInCategory="300"
-        android:title="User"
-        android:icon="@drawable/ic_user"
+        android:title="Home"
+        android:icon="@drawable/ic_home"
         app:showAsAction="ifRoom"></item>
 </menu>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/textViewEnrId"
+        android:layout_marginTop="20dp"
+        android:text="@string/textViewEnr" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:ems="10"
+        android:id="@+id/editTextEnrUserNameId"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:hint="@string/textViewEnrUserName" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:id="@+id/editTextEnrPaswId"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="10dp"
+        android:inputType="textPassword"
+        android:layout_marginLeft="10dp"
+        android:hint="@string/textViewEnrUserPsw" />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:ems="10"
+        android:id="@+id/editTextEnrPasw2Id"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:hint="@string/textViewEnrUserPsw2" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/textButtonEnrUserId"
+        android:id="@+id/buttonEnrUserId"
+        android:layout_gravity="center_horizontal" />
+</LinearLayout>

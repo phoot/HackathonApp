@@ -5,16 +5,30 @@
     <string name="title_sectionCnx">Connexion</string>
     <string name="title_sectionAbout">About</string>
 
-    <string name="title_sectionEnrg">Enregistrement</string>
-    <string name="textViewEnr">Créer votre compte</string>
+    <string name="title_sectionEnrg">Activer</string>
+    <string name="textViewEnr">Activer votre compte</string>
     <string name="textViewCnx">Se connecter</string>
     <string name="textSaveCnx">Sauvegarder identifiant et mot de passe</string>
     <string name="settingFile">settings</string>
     <string name="textConnect">Connexion...</string>
     <string name="no_network">Pas de reseau</string>
-    <string name="serveurUrl">http://google.fr</string>
+    <string name="serveurUrl">http://coveasurfing.eu-gb.mybluemix.net:80/api/coveaUsers?api_key=icinetic</string>
 
+    <string name="textViewEnrUserId">Id Utilisateur</string>
     <string name="textViewEnrUserName">Nom Utilisateur</string>
+    <string name="textViewEnrUserFirstame">Prenom Utilisateur</string>
+    <string name="textViewEnrUserTel">Téléphone</string>
+    <string name="textViewEnrUserMail">Mail</string>
+    <string name="textViewEnrUserSite">Site</string>
+    <string name="textViewEnrUserMarque">Marque</string>
+    <string name="textViewEnrUserDomaineMetier">Domaine Métier</string>
+    <string name="textViewEnrUserMetier">Métier</string>
+    <string name="textViewEnrUserEtiquette">Etiquette</string>
+    <string name="textViewEnrUserTypeBureau">Type de bureau</string>
+    <string name="textViewEnrUserEmplacementBureau">Emplacement bureau</string>
+    <string name="textViewEnrUserOffretBureau">Offre bureau automatique</string>
+
+
     <string name="textViewEnrUserPsw">Mot de passe</string>
     <string name="textViewEnrUserPsw2">Confirmation Mot de passe</string>
     <string name="textButtonEnrUserId">Créer</string>
@@ -26,4 +40,15 @@
     <string name="action_settings">Settings</string>
     <string name="openDrawer">Open navigation drawer</string>
     <string name="closeDrawer">Close navigation drawer</string>
+
+
+    // spinner array for site
+    <string-array name="site_array">
+        <item>Niort</item>
+        <item>Le Mans</item>
+        <item>Strasbourg</item>
+        <item>Paris</item>
+        <item>Chartres</item>
+    </string-array>
+
 </resources>

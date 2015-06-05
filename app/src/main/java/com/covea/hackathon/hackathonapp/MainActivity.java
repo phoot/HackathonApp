@@ -24,8 +24,10 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +37,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,6 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -50,11 +54,12 @@ public class MainActivity extends ActionBarActivity {
     //First We Declare Titles And Icons For Our Navigation Drawer List View
     //This Icons And Titles Are holded in an Array as you can see
 
-    String TITLES[] = {"Home","Connexion","Enregistrement","Shop","Equipe"};
-    int ICONS[] = {R.drawable.ic_home,R.drawable.ic_cnx,R.drawable.ic_enr,R.drawable.ic_shop,R.drawable.ic_team};
+    String TITLES[] = {"Home","Bureau","Immersion Métier","Covoiturage","Activer"};
+    int ICONS[] = {R.drawable.ic_home,R.drawable.ic_bureau,R.drawable.ic_job, R.drawable.ic_voiture,R.drawable.ic_enr,};
 
     private static final String CNX_REQ="0";
     private static final String ENR_REQ="1";
+    private static final String BUR_REQ="2";
     private static final String PROFIL_REQ="2";
 
     //Similarly we Create a String Resource for the name and email in the header view
@@ -62,12 +67,15 @@ public class MainActivity extends ActionBarActivity {
 
     String NAME = "";
     String EMAIL = "user@mail.com";
-    int PROFILE = R.drawable.ic_user;
+    int PROFILE = R.drawable.ic_photo;
 
     public static Context context;
     private static String HttpReq;
+    private static String HttpPostReq;
     public static String statusReturn="200";
 
+
+    public static String[] userdef = new String[13];
 
     private Toolbar toolbar;                              // Declaring the Toolbar Object
 
@@ -81,6 +89,7 @@ public class MainActivity extends ActionBarActivity {
     public static DefaultHttpClient httpClient;
     ProgressDialog mProgressDialog;
     static JSONObject jsonResult;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,16 +111,29 @@ public class MainActivity extends ActionBarActivity {
         // initialize http client
         httpClient = new DefaultHttpClient();
 
-       // check if setting saved
+        GetUser();
+
+        // check if setting saved
         SharedPreferences prefs = context.getSharedPreferences(getResources().getString(R.string.settingFile),MODE_PRIVATE);
-        String restoredUser = prefs.getString("user", null);
-        if (restoredUser != null)
+        String restoredUserN = prefs.getString("nom", null);
+        String restoredUserF = prefs.getString("prenom", null);
+        String restoredMail = prefs.getString("mail", null);
+        if ((restoredUserN != null) || (restoredUserF != null))
         {
-            NAME = restoredUser;
+            NAME = restoredUserN+" "+ restoredUserF;
         }
         else
         {
             NAME="";
+        }
+
+        if (restoredMail != null)
+        {
+            EMAIL = restoredMail;
+        }
+        else
+        {
+            EMAIL="";
         }
         mAdapter = new MyAdapter(TITLES,ICONS,NAME,EMAIL,PROFILE);       // Creating the Adapter of MyAdapter class(which we are going to see in a bit)
         // And passing the titles,icons,header view name, header view email,
@@ -150,18 +172,21 @@ public class MainActivity extends ActionBarActivity {
                             break;
 
                         case 2:
+
                             fragmentManager.beginTransaction()
-                                    .replace(R.id.container, CnxFragment.newInstance(position))
+                                    .replace(R.id.container, BureauFragment.newInstance(position))
                                     .commit() ;
                             break;
 
                         case 3:
+
                             fragmentManager.beginTransaction()
-                                    .replace(R.id.container, EnrFragment.newInstance(position))
+                                    .replace(R.id.container, BlankFragment.newInstance(position))
                                     .commit() ;
                             break;
 
                         case 4:
+
                             fragmentManager.beginTransaction()
                                     .replace(R.id.container, BlankFragment.newInstance(position))
                                     .commit() ;
@@ -169,9 +194,10 @@ public class MainActivity extends ActionBarActivity {
 
                         case 5:
                             fragmentManager.beginTransaction()
-                                    .replace(R.id.container, AboutFragment.newInstance(position))
+                                    .replace(R.id.container, EnrFragment.newInstance(position))
                                     .commit() ;
                             break;
+
                     }
 
                     //Toast.makeText(MainActivity.this,"The Item Clicked is: "+recyclerView.getChildPosition(child), Toast.LENGTH_SHORT).show();
@@ -243,14 +269,18 @@ public class MainActivity extends ActionBarActivity {
 
         FragmentManager fragmentManager = getSupportFragmentManager();
 
-        if (id == R.id.action_search) {
-            return true;
-        }
 
-        if (id == R.id.action_user) {
+        if (id == R.id.action_home) {
 
             fragmentManager.beginTransaction()
                     .replace(R.id.container, PlaceholderFragment.newInstance(1))
+                    .commit() ;
+            return true;
+        }
+        if (id == R.id.action_enr) {
+
+            fragmentManager.beginTransaction()
+                    .replace(R.id.container, EnrFragment.newInstance(1))
                     .commit() ;
             return true;
         }
@@ -350,12 +380,23 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    public void userBur(View v) {
+        //retrieve text entered
+            // hide start game button until download finished
+            Button myButton = (Button) findViewById(R.id.button);
+            myButton.setVisibility(View.INVISIBLE);
 
+            mProgressDialog = ProgressDialog.show(this, getString(R.string.textConnect),
+                "", true);
+
+        GetBureau();
+
+    }
     public void userCnx(View v) {
         //retrieve text entered
         if (isNetworkOnline()) {
             // hide start game button until download finished
-            Button myButton = (Button) findViewById(R.id.buttonCnxUserId);
+            /*Button myButton = (Button) findViewById(R.id.buttonCnxUserId);
             myButton.setVisibility(View.INVISIBLE);
 
             TextView myTextuNameView = (TextView) findViewById(R.id.editTextCnxUserNameId);
@@ -380,7 +421,7 @@ public class MainActivity extends ActionBarActivity {
             {
                 editor.putBoolean("saveInd",false);
                 editor.apply();
-            }
+            }*/
             mProgressDialog = ProgressDialog.show(this, getString(R.string.textConnect),
                     "", true);
 
@@ -395,9 +436,12 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    /**
-     * Enregistrement fragment containing a simple view.
-     */
+    public void userEnr(View v) {
+    }
+
+        /**
+         * Enregistrement fragment containing a simple view.
+         */
     public static class EnrFragment extends Fragment {
         /**
          * The fragment argument representing the section number for this
@@ -424,7 +468,52 @@ public class MainActivity extends ActionBarActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_enr, container, false);
+
+            SharedPreferences prefs = context.getSharedPreferences(getResources().getString(R.string.settingFile), MODE_PRIVATE);
+
+
+            TextView myTextView = (TextView) rootView.findViewById(R.id.editTextIdUserId);
+            myTextView.setText(prefs.getString("user", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.editTextEnrUserNameId);
+            myTextView.setText(prefs.getString("nom", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.editTextPrenomId);
+            myTextView.setText(prefs.getString("prenom", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.editTextTelId);
+            myTextView.setText(prefs.getString("tel", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.editTextMailId);
+            myTextView.setText(prefs.getString("mail", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.textViewSiteId);
+            myTextView.setText(prefs.getString("site", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.textViewMarqueId);
+            myTextView.setText(prefs.getString("marque", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.textViewDomaineMetierId);
+            myTextView.setText(prefs.getString("domaineMetier", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.textViewMetierId);
+            myTextView.setText(prefs.getString("metier", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.textViewEtiquetteId);
+            myTextView.setText(prefs.getString("etiquettes", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.textViewTypeBureauId);
+            myTextView.setText(prefs.getString("typedebureau", null));
+
+            myTextView = (TextView) rootView.findViewById(R.id.textViewEmplacementBureauId);
+            myTextView.setText(prefs.getString("emplacemetBureau", null));
+
+            CheckBox myCheckBoxView = (CheckBox) rootView.findViewById(R.id.checkBoxOffreBureauId);
+            myCheckBoxView.setChecked(prefs.getBoolean("saveInd", false));
+
             return rootView;
+
+
         }
     }
 
@@ -458,11 +547,52 @@ public class MainActivity extends ActionBarActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_about, container, false);
             return rootView;
+
         }
     }
 
     /**
-     * Blank fragment containing a simple view.
+     * About fragment containing a simple view.
+     */
+    public static class BurResFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static BurResFragment newInstance(int sectionNumber) {
+            BurResFragment fragment = new BurResFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public BurResFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_burres, container, false);
+
+
+
+                TextView myTextView = (TextView) rootView.findViewById(R.id.textView19);
+                //myTextView.setText(jObject.getString("userIdBureauSeeder"));
+
+            return rootView;
+
+        }
+    }
+
+    /**
+     * About fragment containing a simple view.
      */
     public static class BlankFragment extends Fragment {
         /**
@@ -491,6 +621,57 @@ public class MainActivity extends ActionBarActivity {
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_blank, container, false);
             return rootView;
+
+        }
+    }
+    /**
+     * About fragment containing a simple view.
+     */
+    public static class BureauFragment extends Fragment {
+        /**
+         * The fragment argument representing the section number for this
+         * fragment.
+         */
+        private static final String ARG_SECTION_NUMBER = "section_number";
+
+        /**
+         * Returns a new instance of this fragment for the given section
+         * number.
+         */
+        public static BureauFragment newInstance(int sectionNumber) {
+            BureauFragment fragment = new BureauFragment();
+            Bundle args = new Bundle();
+            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        public BureauFragment() {
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                                 Bundle savedInstanceState) {
+            View rootView = inflater.inflate(R.layout.fragment_bureau, container, false);
+
+            //manage spinner for site
+            Spinner spinner = (Spinner) rootView.findViewById(R.id.spinner);
+
+            /*
+            // Create an ArrayAdapter using the string array and a default spinner layout
+            ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(context,
+                    R.array.site_array, android.R.layout.simple_spinner_item);
+            // Specify the layout to use when the list of choices appears
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            // Apply the adapter to the spinner
+            spinner.setAdapter(adapter);
+            */
+
+            ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(context, R.array.site_array, R.layout.spinner);
+            spinner.setAdapter(adapter);
+
+            return rootView;
+
         }
     }
 
@@ -523,7 +704,7 @@ public class MainActivity extends ActionBarActivity {
 
        private Context contextHttpTask;
        private String theUrl;
-       private String jsonReturn;
+       String jsonReturn;
 
        public HttpGetTask(Context context, String qUrl) {
            super();
@@ -537,13 +718,14 @@ public class MainActivity extends ActionBarActivity {
        protected void onPostExecute(String result) {
            super.onPostExecute(result);
 
-           // stop workinq animation
-           mProgressDialog.cancel();
 
            FragmentManager fragmentManager = getSupportFragmentManager();
 
            switch (HttpReq){
                case CNX_REQ:
+                   // stop workinq animation
+                   mProgressDialog.cancel();
+
                    if (statusReturn.equals("200"))
                    {
                        // go back home
@@ -552,7 +734,77 @@ public class MainActivity extends ActionBarActivity {
                                .commit() ;
                    }
 
+               case BUR_REQ:
+                   // stop workinq animation
+                   mProgressDialog.cancel();
 
+                   if (statusReturn.equals("200"))
+                   {
+
+                       try {
+                           JSONArray mJsonArray = new JSONArray(jsonReturn);
+                           JSONObject jObject = new JSONObject();
+                           jObject = mJsonArray.getJSONObject(0);
+                       } catch (JSONException e) {
+                           e.printStackTrace();
+                       }
+
+
+                       // go BurRes
+                       fragmentManager.beginTransaction()
+                               .replace(R.id.container, BurResFragment.newInstance(1))
+                               .commit() ;
+
+                   }
+
+               case ENR_REQ:
+                   if (statusReturn.equals("200"))
+                   {
+
+
+                       try {
+                           JSONArray mJsonArray = new JSONArray(jsonReturn);
+                           JSONObject jObject = new JSONObject();
+                           jObject = mJsonArray.getJSONObject(0);
+
+                           SharedPreferences.Editor editor = context.getSharedPreferences(getResources().getString(R.string.settingFile),MODE_PRIVATE).edit();
+                           editor.putString("user", jObject.getString("userId"));
+                           editor.putString("nom", jObject.getString("nom"));
+                           editor.putString("prenom", jObject.getString("prenom"));
+                           editor.putString("tel", jObject.getString("tel"));
+                           editor.putString("mail", jObject.getString("mail"));
+                           editor.putString("site", jObject.getString("site"));
+                           editor.putString("marque", jObject.getString("marque"));
+                           editor.putString("domaineMetier", jObject.getString("domaineMetier"));
+                           editor.putString("metier", jObject.getString("metier"));
+                           editor.putString("etiquettes", jObject.getString("etiquettes"));
+                           editor.putString("typedebureau", jObject.getString("typedebureau"));
+                           editor.putString("emplacementBureau", jObject.getString("emplacementBureau"));
+                           editor.putBoolean("saveInd", jObject.getBoolean("offreBureauAutomatique"));
+                           editor.apply();
+
+                           /*userdef[0]=jObject.getString("userId");
+                           userdef[1]=jObject.getString("nom");
+                           userdef[2]= jObject.getString("prenom");
+                           userdef[3]=jObject.getString("tel");
+                           userdef[4]= jObject.getString("mail");
+                           userdef[4]= jObject.getString("site");
+                           userdef[5]= jObject.getString("marque");
+                           userdef[6]= jObject.getString("domaineMetier");
+                           userdef[7]= jObject.getString("metier");
+                           userdef[8]= jObject.getString("etiquettes");
+                           userdef[9]= jObject.getString("typedebureau");
+                           userdef[10] = jObject.getString("emplacementBureau");
+                           userdef[11]= String.valueOf(jObject.getBoolean("offreBureauAutomatique"));*/
+
+
+                       } catch (JSONException e) {
+                           e.printStackTrace();
+                       }
+
+
+
+                   }
 
                    break;
 
@@ -636,7 +888,126 @@ public class MainActivity extends ActionBarActivity {
        }
    }
 
+/*
+    // backgroud http get
+    class HttpPostTask extends AsyncTask<String, Integer, String> {
 
+        private Context contextHttpTask;
+        private String theUrl;
+        private String jsonReturn;
+
+        public HttpPostTask(Context context, String qUrl) {
+            super();
+
+            this.contextHttpTask = context;
+            theUrl = qUrl;
+        }
+
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            // stop workinq animation
+            mProgressDialog.cancel();
+
+            FragmentManager fragmentManager = getSupportFragmentManager();
+
+            switch (HttpPostReq){
+                case CNX_REQ:
+                    if (statusReturn.equals("200"))
+                    {
+                        // go back home
+                        fragmentManager.beginTransaction()
+                                .replace(R.id.container, PlaceholderFragment.newInstance(1))
+                                .commit() ;
+                    }
+
+
+
+                    break;
+
+                default:
+                    // go back home
+                    fragmentManager.beginTransaction()
+                            .replace(R.id.container, PlaceholderFragment.newInstance(1))
+                            .commit() ;
+            }
+
+            try {
+                displayResult(jsonReturn);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            // launch download
+            try {
+                jsonReturn = HttpPostTask(theUrl);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+            }
+
+            return "ok";
+        }
+
+
+        public String HttpPostTask(String urlStr, ArrayList arrayParam) throws IOException, URISyntaxException {
+            StringBuilder builder = new StringBuilder();
+            HttpGet http = new HttpGet(urlStr);
+            String loginValue;
+            String passwordValue;
+
+            // add login/password basic authentication
+            if (HttpReq == CNX_REQ) {
+                SharedPreferences prefs = context.getSharedPreferences(getResources().getString(R.string.settingFile), MODE_PRIVATE);
+
+                loginValue = prefs.getString("user", null);
+                passwordValue = prefs.getString("password", null);
+
+                String credentials = loginValue + ":" + passwordValue;
+                String base64EncodedCredentials = Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
+                httpGet.addHeader("Authorization", "Basic " + base64EncodedCredentials);
+            }
+            try {
+
+                HttpResponse response = httpClient.execute(httpGet);
+                StatusLine statusLine = response.getStatusLine();
+                final int statusCode = statusLine.getStatusCode();
+
+                if(statusCode == 200){
+                    HttpEntity entity = response.getEntity();
+                    InputStream content = entity.getContent();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(content));
+                    String line;
+                    while((line = reader.readLine()) != null){
+                        builder.append(line);
+                    }
+                }
+                else
+                {
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            statusReturn=String.valueOf(statusCode);
+                        }
+                    });
+                    return "ERR" + statusCode;
+                }
+            } catch (Exception e) {
+                return e.toString();
+            }
+            return builder.toString();
+        }
+    }
+
+*/
 
     public void displayResult(String readJSON) throws JSONException {
 
@@ -652,7 +1023,31 @@ public class MainActivity extends ActionBarActivity {
         // set new fragment to display result
         FragmentManager fragmentManager = getSupportFragmentManager();
         fragmentManager.beginTransaction()
-                .replace(R.id.container, BlankFragment.newInstance(1))
+                .replace(R.id.container, BureauFragment.newInstance(1))
                 .commit();
     }
+
+
+    public void GetUser(){
+
+        String searchUrl = "http://coveasurfing.eu-gb.mybluemix.net:80/api/coveaUsers?conditions=%7B%22userId%22%20%3A%20%22A17028%22%7D&api_key=icinetic";
+
+        // request for user cnx
+        HttpReq=ENR_REQ;
+        HttpGetTask myDownloading = (HttpGetTask) new HttpGetTask(this, searchUrl).execute();
+
+    }
+
+
+    public void GetBureau(){
+
+        String searchUrl = "http://coveasurfing.eu-gb.mybluemix.net:80/api/echangeBureaus?api_key=icinetic";
+
+        // request for user cnx
+        HttpReq=BUR_REQ;
+        HttpGetTask myDownloading = (HttpGetTask) new HttpGetTask(this, searchUrl).execute();
+
+    }
+
+
 }
